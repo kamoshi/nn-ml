@@ -1,28 +1,30 @@
-from random import random, randint
-from typing import Tuple
+import random
+from typing import Tuple, NewType
 
 
-_FACTS = [
+Entry = Tuple[list[int], int]
+
+
+_FACTS: list[Entry] = [
     ([0, 0], 0),
     ([0, 1], 0),
     ([1, 0], 0),
     ([1, 1], 1),
 ]
 
-def noisify_point(x, y) -> Tuple[int, int]:
-    pass
-
-_NOISE = [(random()/4)]
+def noisify_point(point: Entry) -> Entry:
+    (x, y), c = point
+    m_x, m_y = random.random() / 2, random.random() / 2
+    s_x, s_y = [0, 1][random.randint(0, 1)], [0, 1][random.randint(0, 1)]
+    return ([x + s_x*m_x, y + s_y*m_y], c)
 
 
 # Funkcja sumująca
 def weighted_sum(X: list[float], W: list[float]) -> float:
-    if len(X) != len(W):
-        raise Exception("Input and weight vectors must have an equal length")
-    sum = 0
+    s, W = W[0], W[1:]
     for i in range(0, len(X)):
-        sum += X[i] * W[i]
-    return sum
+        s += X[i] * W[i]
+    return s
 
 
 # Funkcje aktywacji
@@ -35,15 +37,26 @@ def step_bipolar(sum: float, theta: float) -> -1 | 1:
 
 # Perceptron
 def perceptron(X: list[float], W: list[float]) -> int:
-    sum = W[0]  # bias = 1 * w[0]
-    sum += weighted_sum(X, W[1:])  # w[1], w[2], ...
+    sum = weighted_sum(X, W)
     activation = step_heaviside(sum, theta=0)
     return activation
 
 
+def error(d: int, y: int) -> int:
+    return d - y
+
+
+def simple_learning():
+    W = [random.random()/4, random.random()/4, random.random()/4]
+    data = [noisify_point(_FACTS[random.randint(0, 3)]) for _ in range(100)]
+
+    X, Y = [t for t, _ in data], [c for _, c in data]
+    X_train, X_test = X[20:], X[:20]
+    Y_train, Y_test = Y[20:], Y[:20]
+
+
+
 def main():
-    for (X, d) in _FACTS:
-        result = perceptron(X, [-.4, 0.2, 0.3])
-        print(f"X={X}, d={d}, res={result}")
+    simple_learning()
 
 main()
