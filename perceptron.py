@@ -1,30 +1,39 @@
 import random
+import itertools
 from typing import Tuple, NewType
 
 
 LabelledPoint = NewType("LabelledPoint", Tuple[list[int], int])
 
 
-_FACTS: list[LabelledPoint] = [
+_FACTS_AND: list[LabelledPoint] = [
     ([0, 0], 0),
     ([0, 1], 0),
     ([1, 0], 0),
     ([1, 1], 1),
 ]
 
+_FACTS_OR: list[LabelledPoint] = [
+    ([0, 0], 0),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 1),
+]
+
+
+get_noise = lambda x: random.random() / x
+get_sign = lambda: [-1, 1][random.randint(0, 1)]
+
+
 def noisify_point(point: LabelledPoint) -> LabelledPoint:
     (x, y), c = point
-    m_x, m_y = random.random() / 2, random.random() / 2
-    s_x, s_y = [0, 1][random.randint(0, 1)], [0, 1][random.randint(0, 1)]
+    m_x, m_y, s_x, s_y = get_noise(4), get_noise(4), get_sign(), get_sign()
     return ([x + s_x*m_x, y + s_y*m_y], c)
 
 
 # Funkcja sumująca
 def weighted_sum(X: list[float], W: list[float]) -> float:
-    s, W = W[0], W[1:]
-    for i in range(0, len(X)):
-        s += X[i] * W[i]
-    return s
+    return W[0] + sum(x*w for x, w in zip(X, W[1:]))
 
 
 # Funkcje aktywacji
@@ -37,9 +46,7 @@ def step_bipolar(sum: float, theta: float) -> -1 | 1:
 
 # Perceptron
 def perceptron(X: list[float], W: list[float]) -> int:
-    sigma = weighted_sum(X, W)
-    activation = step_heaviside(sigma, theta=0)
-    return activation
+    return step_heaviside(weighted_sum(X, W), theta=0)
 
 
 # Błąd
@@ -47,26 +54,24 @@ def error(d: int, y: int) -> int:
     return d - y
 
 
-def simple_learning(X, Y, W, alpha) -> list[float]:
+def simple_learning(X: list[list[float]], Y: list[int], W: list[float], alpha: float) -> list[float]:
     get_error = lambda x, y, w: error(y=perceptron(x, w), d=y)
 
-    def epoch() -> list[int]:
-        errors = []
+    def epoch() -> int:
+        errors = 0
         for x, y in zip(X, Y):
-            err = get_error(x, y, W)
+            if (err := get_error(x, y, W)) != 0:
+                errors += 1
 
-            if err != 0:
-                W[0] += alpha * err
-                W[1] += alpha * err * x[0]
-                W[2] += alpha * err * x[1]
-            
-            errors.append(err)
+            x_with_bias = itertools.chain((1.0,), x)
+            for i in range(len(W)):
+                W[i] += alpha * err * next(x_with_bias)
         return errors
 
     while True:
         print("Weights", W)
-        print("Errors", errors := epoch())
-        if all(item == 0 for item in errors):
+        print("Errors #", errors := epoch())
+        if errors == 0:
             break
     
     return W
@@ -79,12 +84,15 @@ def test(X: list[list[float]], Y: list[int], W: list[float]):
 
 
 def main():
-    X, Y = zip(*[noisify_point(_FACTS[random.randint(0, 3)]) for _ in range(1000)])
-    X_train, X_test = X[200:], X[:200]
-    Y_train, Y_test = Y[200:], Y[:200]
-    W = [random.random()/10, random.random()/10, random.random()/10]
-    alpha = 0.05
+    X, Y = zip(*[noisify_point(_FACTS_OR[random.randint(0, 3)]) for _ in range(500)])
+    X_train, X_test = X[50:], X[:50]
+    Y_train, Y_test = Y[50:], Y[:50]
+
+    W = [get_noise(10), get_noise(10), get_noise(10)]
+    alpha = 0.01
+
     test(X_test, Y_test, simple_learning(X_train, Y_train, W, alpha))
 
 
-main()
+if __name__ == "__main__":
+    main()
