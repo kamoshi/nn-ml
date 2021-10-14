@@ -1,57 +1,72 @@
 import random
-from perceptron import simple_learning
+from perceptron import simple_learning, step_bipolar
 from shared import FACTS_OR, noisify_point, get_noise, get_sign
 
 
-def test_theta(X: list[list[float]], Y: list[float], W: list[float], alpha: float) -> float:
+gen_sequences = lambda l: zip(*[noisify_point(FACTS_OR[random.randint(0, 3)]) for _ in range(l)])
+def gen_weights(l: int = 3, div: int = 10): return [get_noise(div) for _ in range(l)]
+
+
+def test_theta():
     print("Running theta test.")
     thetas = [0, 1, 2, 4, 8, 16, 32, 64, 128]
+    alpha = 0.005
     for theta in thetas:
-        _, epochs = simple_learning(X, Y, W, alpha, theta)
-        print("Theta:", theta, "\tEpochs:", epochs)
+        results = []
+        for _ in range(10):
+            X, Y = gen_sequences(500)
+            W = gen_weights()
+            results.append(simple_learning(X, Y, W, alpha, theta)[1])
+        avg_epochs = sum(results)/len(results)
+        print("Theta:", theta, "\tAvg epochs:", avg_epochs)
 
 
-def test_weights(X, Y):
+def test_weights():
     print("Running weight test.")
-    weight = [
-        [1.0*get_sign(), 1.0*get_sign(), 1.0*get_sign()],
-        [0.8*get_sign(), 0.8*get_sign(), 0.8*get_sign()],
-        [0.6*get_sign(), 0.6*get_sign(), 0.6*get_sign()],
-        [0.4*get_sign(), 0.4*get_sign(), 0.4*get_sign()],
-        [0.2*get_sign(), 0.2*get_sign(), 0.2*get_sign()],
-        [0.0*get_sign(), 0.0*get_sign(), 0.0*get_sign()],
-    ]
-    for weight in weight:
-        _, epochs = simple_learning(X, Y, weight, alpha=0.05, theta=0)
-        print("Epochs:", epochs, "\tWeights:", weight)
+    w_ranges = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    alpha = 0.005
+    for w_range in w_ranges:
+        results = []
+        for _ in range(10):
+            X, Y = gen_sequences(500)
+            W = list(map(lambda w: w * w_range, gen_weights(div=1)))
+            results.append(simple_learning(X, Y, W, alpha)[1])
+        avg_epochs = sum(results)/len(results)
+        print("Weight range:", w_range, "Epochs", avg_epochs)
 
 
-def test_alpha(X, Y, W):
+def test_alpha():
     print("Running alpha test.")
-    alphas = [1.0, 0.2, 0.1, 0.05, 0.01, 0.005, 0.001]
+    alphas = [1.0, 0.5, 0.1, 0.05, 0.01, 0.005, 0.001]
     for alpha in alphas:
-        _, epochs = simple_learning(X, Y, W, alpha, theta=0)
-        print("Alpha:", alpha, "\tEpochs:", epochs)
+        results = []
+        for _ in range(10):
+            X, Y = gen_sequences(500)
+            W = gen_weights()
+            results.append(simple_learning(X, Y, W, alpha)[1])
+        avg_epochs = sum(results)/len(results)
+        print("Alpha:", alpha, "\tEpochs:", avg_epochs)
 
 
-def test_activation(X, Y, W):
-    print("Running activation test.")
-    pass
+def test_activation():
+    alphas = [0.1, 0.01, 0.001, 0.0001]
+    for alpha in alphas:
+        results = []
+        for _ in range(10):
+            X, Y = gen_sequences(200)
+            Y_b = [-1 if y == 0 else y for y in Y]
+            W = gen_weights(div=1)
+            results.append((simple_learning(X, Y, W, alpha)[1], simple_learning(X, Y_b, W, alpha, activation=step_bipolar)[1]))
+        res_count = len(results)
+        result = tuple(res / res_count for res in map(sum, zip(*results)))
+        print("Alpha:", alpha, "Unipolar:", result[0], "Bipolar:", result[1])
 
 
 def main():
-    X, Y = zip(*[noisify_point(FACTS_OR[random.randint(0, 3)]) for _ in range(500)])
-    # X, Y = zip(*convert_points_to_bipolar([noisify_point(_FACTS_OR[random.randint(0, 3)]) for _ in range(500)]))
-    X_train, X_test = X[50:], X[:50]
-    Y_train, Y_test = Y[50:], Y[:50]
-
-    W = [get_noise(10), get_noise(10), get_noise(10)]
-    alpha = 0.005
-
-    test_theta(X_train, Y_train, W, alpha)
-    test_weights(X_train, Y_train)
-    test_alpha(X_train, Y_train, W)
-    test_activation(X_train, Y_train, W)
+    # test_theta()
+    test_weights()
+    # test_alpha()
+    # test_activation()
 
 
 if __name__ == "__main__":

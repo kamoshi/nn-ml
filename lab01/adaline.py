@@ -25,14 +25,13 @@ def adaline(X: list[float], W: list[float]) -> float:
     return threshold(weighted_sum(X, W))
 
 
-def lms_learning(X: list[list[float]], Y: list[int], W: list[float], allowed_err: float, mi: float, max_epochs: int) -> list[float]:
-
+def lms_learning(X: list[list[float]], Y: list[int], W: list[float], allowed_err: float, mi: float, max_epochs: int = 100) -> list[float]:
+    epochs = 0
     def epoch() -> float:
         summed_quadratic_err = 0.0
         for x, y in zip(X, Y):
             result = weighted_sum(x, W)
             err = error(d=y, y=result)
-            # print("blad", err)
             summed_quadratic_err += quadratic_error(d=y, y=result)
 
             x_with_bias = itertools.chain((1.0,), x)
@@ -42,13 +41,13 @@ def lms_learning(X: list[list[float]], Y: list[int], W: list[float], allowed_err
         return summed_quadratic_err / len(X)
     
     while True:
+        epochs += 1
         mean_quadratic_err = epoch()
-        print("LMS", mean_quadratic_err)
         max_epochs -= 1
         if mean_quadratic_err < allowed_err or max_epochs <= 0:
             break
     
-    return W
+    return W, epochs
 
 
 def test(X: list[list[float]], Y: list[int], W: list[float]):

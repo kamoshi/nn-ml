@@ -1,6 +1,6 @@
 import random
 import itertools
-from typing import Tuple
+from typing import Callable, Tuple
 from shared import noisify_point, FACTS_OR, get_noise, get_sign
 
 
@@ -18,8 +18,8 @@ def step_bipolar(sum: float, theta: float) -> -1 | 1:
 
 
 # Perceptron
-def perceptron(X: list[float], W: list[float], theta) -> int:
-    return step_heaviside(weighted_sum(X, W), theta)
+def perceptron(X: list[float], W: list[float], theta: float, activation: Callable) -> int:
+    return activation(weighted_sum(X, W), theta)
 
 
 # Błąd
@@ -28,8 +28,8 @@ def error(d: int, y: int) -> int:
 
 
 # Funkcja zwraca znalezione wagi i liczbę epok
-def simple_learning(X: list[list[float]], Y: list[int], W: list[float], alpha: float, theta: float = 0) -> Tuple[list[float], int]:
-    get_error = lambda x, y, w: error(y=perceptron(x, w, theta), d=y)
+def simple_learning(X: list[list[float]], Y: list[int], W: list[float], alpha: float, theta: float = 0, activation: Callable = step_heaviside) -> Tuple[list[float], int]:
+    get_error = lambda x, y, w: error(y=perceptron(x, w, theta, activation), d=y)
     W = W.copy()
     epochs = 0
 
@@ -52,10 +52,10 @@ def simple_learning(X: list[list[float]], Y: list[int], W: list[float], alpha: f
     return W, epochs
 
 
-def test(X: list[list[float]], Y: list[int], W: list[float], theta: float = 0):
+def test(X: list[list[float]], Y: list[int], W: list[float], theta: float = 0, activation: Callable = step_heaviside):
     print("Testing weights:", W)
     print("Test size:", len(X))
-    [print("Result:", result := perceptron(x, W, theta), "\tExpected:", y, "\tDiff:", error(d=y, y=result), "\tX: ", x) for x, y in zip(X, Y)]
+    [print("Result:", result := perceptron(x, W, theta, activation), "\tExpected:", y, "\tDiff:", error(d=y, y=result), "\tX: ", x) for x, y in zip(X, Y)]
 
 
 def main():
