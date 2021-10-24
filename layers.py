@@ -15,7 +15,7 @@ class Layer(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def size(self):
+    def size(self) -> int:
         ...
 
     @property
@@ -96,9 +96,8 @@ class NeuralNetwork:
         self._layers.append(layer)
 
     def forward(self, inputs):
-        for layer in self._layers:
-            inputs = layer.forward(inputs)
-        return inputs
+        outputs = [(inputs := layer.forward(inputs)) for layer in self._layers]
+        return outputs
 
     def __repr__(self):
         return f"NeuralNetwork({str(self._layers)})"
