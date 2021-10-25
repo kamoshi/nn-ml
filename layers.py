@@ -37,7 +37,7 @@ class Input(Layer):
         pass
 
     def forward(self, inputs):
-        return inputs
+        return None, inputs
 
     @property
     def size(self):
@@ -67,8 +67,8 @@ class Dense(Layer):
         self._weights = self._w_init(prev_size, self._size)
 
     def forward(self, inputs):
-        sums = self._weights.dot(inputs) + self._bias
-        return self._activation(sums)
+        z = self._weights.dot(inputs) + self._bias
+        return z, self._activation(z)
 
     @property
     def size(self):
@@ -96,8 +96,17 @@ class NeuralNetwork:
         self._layers.append(layer)
 
     def forward(self, inputs):
-        outputs = [(inputs := layer.forward(inputs)) for layer in self._layers]
+        outputs = []
+        for layer in self._layers:
+            z, inputs = layer.forward(inputs)
+            outputs.append((z, inputs))
         return outputs
+
+    def single_train(self, inputs, expected):
+        outputs = self.forward(inputs)
+        z, a = outputs[-1]
+        grad = -(expected - a)
+        print(grad)
 
     def __repr__(self):
         return f"NeuralNetwork({str(self._layers)})"
