@@ -13,9 +13,23 @@ class Layer(abc.ABC):
     def forward(self, inputs):
         ...
 
+    @abc.abstractmethod
+    def derive(self):
+        ...
+
     @property
     @abc.abstractmethod
-    def size(self) -> int:
+    def z(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def a(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def size(self):
         ...
 
     @property
@@ -32,12 +46,26 @@ class Layer(abc.ABC):
 class Input(Layer):
     def __init__(self, size: int):
         self._size = size
+        self._a = None
 
     def initialize(self, prev_size: int):
         pass
 
     def forward(self, inputs):
-        return None, inputs
+        assert(len(inputs) == self._size)
+        self._a = inputs.reshape((1, len(inputs)))
+        return self._a
+
+    def derive(self):
+        return None
+
+    @property
+    def z(self):
+        return None
+
+    @property
+    def a(self):
+        return self._a
 
     @property
     def size(self):
@@ -58,17 +86,31 @@ class Input(Layer):
 class Dense(Layer):
     def __init__(self, size: int, activation: Callable, w_init: Callable):
         self._size = size
-        self._activation = activation
-        self._bias = np.zeros(size)
+        self._activation, self._derivative = activation()
+        self._bias = np.zeros((1, size))
         self._w_init = w_init
         self._weights = None
+        self._z = None
+        self._a = None
 
     def initialize(self, prev_size: int):
         self._weights = self._w_init(prev_size, self._size)
 
     def forward(self, inputs):
-        z = self._weights.dot(inputs) + self._bias
-        return z, self._activation(z)
+        self._z = (self._weights @ inputs.T).T + self._bias
+        self._a = self._activation(self._z)
+        return self.a
+
+    def derive(self):
+        return self._derivative(self.a)
+
+    @property
+    def z(self):
+        return self._z
+
+    @property
+    def a(self):
+        return self._a
 
     @property
     def size(self):
@@ -96,17 +138,21 @@ class NeuralNetwork:
         self._layers.append(layer)
 
     def forward(self, inputs):
-        outputs = []
         for layer in self._layers:
-            z, inputs = layer.forward(inputs)
-            outputs.append((z, inputs))
-        return outputs
+            inputs = layer.forward(inputs)
+        return inputs
 
     def single_train(self, inputs, expected):
-        outputs = self.forward(inputs)
-        z, a = outputs[-1]
-        grad = -(expected - a)
-        print(grad)
+        output = self.forward(inputs)
+        d = (-(expected - output))
+        gradient = d.T @ self._layers[-2].a
+
+        for i in range(len(self._layers) - 2):
+            previous_layer = self._layers[-3 - i]
+            current_layer = self._layers[-2 - i]
+            forward_layer = self._layers[-1 - i]
+            d = np.multiply(forward_layer.weights.T.dot(d.T).T, current_layer.derive())
+            gradient = d.T.dot(previous_layer.a)
 
     def __repr__(self):
         return f"NeuralNetwork({str(self._layers)})"

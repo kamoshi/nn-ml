@@ -11,9 +11,11 @@ def main():
     X_test, y_test = load_mnist('data/mnist', kind='t10k')
 
     nn = NeuralNetwork(input_size=3)
-    nn.add_layer(Dense(size=4, activation=tanh, w_init=gaussian()))
+    nn.add_layer(Dense(size=4, activation=sigmoid, w_init=gaussian()))
+    nn.add_layer(Dense(size=6, activation=sigmoid, w_init=gaussian()))
     nn.add_layer(Dense(size=2, activation=softmax, w_init=gaussian()))
 
+    # print(nn.forward(np.array([0, 9, 4])))
     nn.single_train(np.array([0, 0.2, 0.4]), np.array([0, 0]))
 
 
