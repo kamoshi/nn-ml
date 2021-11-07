@@ -3,9 +3,9 @@ import functools
 import numpy as np
 from multiprocessing import Pool, RawArray
 
-from activation import relu, tanh, softmax, activations
+from activation import softmax, activations
 from initializers import gaussian
-from layers import NeuralNetwork, Dense
+from lab02.layers import NeuralNetwork, Dense
 from utils.mnist_reader import load_mnist
 
 
@@ -118,9 +118,9 @@ test_cases = [
 ]
 
 
-if __name__ == '__main__':
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+def main():
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 4
+    processes = 10
     with Pool(processes=processes, initializer=init_worker, initargs=(x_train_raw, x_train.shape, x_test_raw, x_test.shape, y_train_raw, y_train.shape, y_test_raw, y_test.shape)) as pool:
         for i, test in enumerate(test_cases):
             print("============\nRunning test", i)
@@ -162,3 +162,8 @@ if __name__ == '__main__':
                 # append result to file
                 with open("results.txt", "a") as f:
                     f.write(f"{i},{size},{activation},{scale},{batch_size},{learning_rate},{avg_epochs},{avg_accuracy}\n")
+
+
+if __name__ == '__main__':
+    main()
+    print("Done")

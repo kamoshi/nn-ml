@@ -3,7 +3,7 @@ import subprocess
 from datetime import datetime
 from threading import Thread, Event
 
-from utils.configs import SYNC_INTERVAL, LOGGER, LOG_PATH, ROOT_DIR, SYNC_TIMEOUT, RESULT_PATH, SYNC_SCRIPT_PATH
+from lab02.utils.configs import SYNC_INTERVAL, LOGGER, LOG_PATH, ROOT_DIR, SYNC_TIMEOUT, RESULT_PATH, SYNC_SCRIPT_PATH
 
 
 def now_int():

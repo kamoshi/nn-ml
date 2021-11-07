@@ -1,10 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from activation import sigmoid, softmax, relu, tanh
-from initializers import gaussian, zeros
-from layers import NeuralNetwork, Dense
-from utils.mnist_reader import load_mnist
+from lab02.utils.mnist_reader import load_mnist
 
 
 def to_binary_output(y: int) -> NDArray:
