@@ -174,14 +174,27 @@ class NeuralNetwork:
             layer.learn_weights(learning_rate * sum_nabla_w.pop() / len(inputs))
             layer.learn_bias(learning_rate * sum_nabla_b.pop() / len(inputs))
 
-    def sgd(self, inputs: list[NDArray], expected: list[NDArray], learning_rate: float, epochs: int, batch_size: int, test_data: Tuple[list[NDArray], list[NDArray]] = None):
-        for epoch in range(epochs):
+    def sgd(self,
+            inputs: list[NDArray],
+            expected: list[NDArray],
+            learning_rate: float,
+            max_epochs: int,
+            batch_size: int,
+            stop_early: bool = False,
+            test_data: Tuple[list[NDArray], list[NDArray]] = None
+            ):
+        last_accuracy = 0.0
+        for epoch in range(max_epochs):
             for i in range(0, len(inputs), batch_size):
                 self.run_mini_batch(inputs[i:i + batch_size], expected[i:i + batch_size], learning_rate)
-            print(f"Epoch {epoch + 1}/{epochs}")
+            # print(f"Epoch {epoch + 1}/{max_epochs}")
             # Ewaluacja na zbiorze testowym
             if test_data is not None:
-                print(self.evaluate(test_data[0], test_data[1]))
+                accuracy = self.evaluate(test_data[0], test_data[1])
+                # print("Accuracy:", accuracy)
+                if stop_early and accuracy <= last_accuracy:
+                    # print("Overfitting, stopping training")
+                    return max_epochs + 1
 
     def evaluate(self, inputs: list[NDArray], expected: list[NDArray]):
         correct = 0

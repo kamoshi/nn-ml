@@ -37,3 +37,10 @@ def softmax():
 
     return _softmax, None
 
+
+activations = {
+    'sigmoid': sigmoid,
+    'tanh': tanh,
+    'relu': relu,
+    'softmax': softmax,
+}
