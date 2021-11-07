@@ -26,7 +26,7 @@ def relu():
         return np.maximum(0, vec)
 
     def _relu_p(a):
-        return np.where(a > 0, 1, 0)
+        return (a > 0).astype(a.dtype)
 
     return _relu, _relu_p
 

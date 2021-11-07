@@ -15,6 +15,7 @@ class Input(Layer):
 
     def forward(self, inputs):
         assert(len(inputs) == self._size)
+        # normalizacja wejścia
         if (max_value := np.max(inputs)) > 1:
             inputs = inputs / max_value
         self._a = inputs.reshape((1, len(inputs)))
@@ -67,7 +68,7 @@ class Dense(Layer):
         self._weights = self._w_init(prev_size, self._size)
 
     def forward(self, inputs):
-        self._z = (self._weights @ inputs.T).T + self._bias
+        self._z = np.dot(self._weights, inputs.T).T + self._bias
         self._a = self._activation(self._z)
         return self.a
 

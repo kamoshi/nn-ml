@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from activation import sigmoid, softmax, relu, tanh
-from initializers import gaussian
+from initializers import gaussian, zeros
 from layers import NeuralNetwork, Dense
 from utils.mnist_reader import load_mnist
 
@@ -20,11 +20,11 @@ def main():
     y_test = list(map(to_binary_output, y_test))
 
     nn = NeuralNetwork(input_size=784)
-    nn.add_layer(Dense(size=64, activation=sigmoid, w_init=gaussian()))
-    nn.add_layer(Dense(size=64, activation=sigmoid, w_init=gaussian()))
+    nn.add_layer(Dense(size=128, activation=relu, w_init=gaussian(scale=0.01)))
+    nn.add_layer(Dense(size=64, activation=relu, w_init=gaussian(scale=0.01)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
-
-    nn.sgd(x_train, y_train, epochs=10, batch_size=50, learning_rate=0.05, test_data=(x_test, y_test))
+    print(nn)
+    nn.sgd(x_train, y_train, epochs=20, batch_size=50, learning_rate=0.1, test_data=(x_test, y_test))
     print(nn.evaluate(x_test, y_test))
 
 
