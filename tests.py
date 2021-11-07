@@ -49,7 +49,7 @@ def worker_func(
     nn.add_layer(Dense(size=layer_size, activation=activations[layer_activation], w_init=gaussian(scale=initializer_scale)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
 
-    epochs = nn.sgd(x_train, y_train, max_epochs=20, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, test_data=(x_test, y_test))
+    epochs = nn.sgd(x_train, y_train, max_epochs=100, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, test_data=(x_test, y_test))
     accuracy = nn.evaluate(x_test, y_test)
     print(f"Worker {worker_num} finished")
     return epochs, accuracy
@@ -64,7 +64,7 @@ def worker_func(
 
 # rozkręcenie procesora i sprawdzenie czy multiprocessing działa
 test_00 = [
-    (16, "relu", 0.1, 100, 0.1)
+    (8, "relu", 0.1, 50, 0.1)
 ]
 
 
@@ -143,15 +143,22 @@ if __name__ == '__main__':
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 10
+    processes = 4
     with Pool(processes=processes, initializer=init_worker, initargs=(x_train_raw, x_train.shape, x_test_raw, x_test.shape, y_train_raw, y_train.shape, y_test_raw, y_test.shape)) as pool:
         for i, test in enumerate(test_cases):
             print("============\nRunning test", i)
             for size, activation, scale, batch_size, learning_rate in test:
                 print("With params:", size, activation, scale, batch_size, learning_rate)
+
                 _worker = functools.partial(worker_func, size, activation, scale, batch_size, learning_rate)
-                epochs, accuracies = zip(*pool.map(_worker, range(10)))
+                epochs, accuracies = zip(*pool.map(_worker, range(processes)))
+
                 avg_epochs = sum(epochs) / len(epochs)
                 avg_accuracy = sum(accuracies) / len(accuracies)
+
                 print(f"Results (pool x{processes}):\n", epochs, accuracies)
                 print("Avg epochs", avg_epochs, "Avg accuracy", avg_accuracy)
+
+                # append result to file
+                with open("results.txt", "a") as f:
+                    f.write(f"{i},{size},{activation},{scale},{batch_size},{learning_rate},{avg_epochs},{avg_accuracy}\n")

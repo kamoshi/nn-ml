@@ -187,14 +187,15 @@ class NeuralNetwork:
         for epoch in range(max_epochs):
             for i in range(0, len(inputs), batch_size):
                 self.run_mini_batch(inputs[i:i + batch_size], expected[i:i + batch_size], learning_rate)
-            # print(f"Epoch {epoch + 1}/{max_epochs}")
+            print(f"Epoch {epoch + 1}/{max_epochs}")
             # Ewaluacja na zbiorze testowym
             if test_data is not None:
                 accuracy = self.evaluate(test_data[0], test_data[1])
-                # print("Accuracy:", accuracy)
+                print("Accuracy:", accuracy)
                 if stop_early and accuracy <= last_accuracy:
-                    # print("Overfitting, stopping training")
-                    return max_epochs + 1
+                    print("Overfitting, stopping training")
+                    return epoch + 1
+                last_accuracy = accuracy
 
     def evaluate(self, inputs: list[NDArray], expected: list[NDArray]):
         correct = 0
