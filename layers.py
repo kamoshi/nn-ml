@@ -1,3 +1,4 @@
+import pickle
 from typing import Callable, Tuple
 import numpy as np
 from numpy.typing import NDArray
@@ -40,9 +41,17 @@ class Input(Layer):
     def weights(self):
         raise ValueError("weights are not defined for Input layer")
 
+    @weights.setter
+    def weights(self, weights: NDArray):
+        raise Exception("Input layer doesn't have weights")
+
     @property
     def bias(self):
         raise ValueError("bias is not defined for Input layer")
+
+    @bias.setter
+    def bias(self, bias: NDArray):
+        raise Exception("Input layer doesn't have bias")
 
     def learn_weights(self, w_change: NDArray):
         raise Exception("Input layer cannot learn weights")
@@ -91,9 +100,19 @@ class Dense(Layer):
     def weights(self):
         return self._weights
 
+    @weights.setter
+    def weights(self, value: NDArray):
+        assert(value.shape == self._weights.shape)
+        self._weights = value.copy()
+
     @property
     def bias(self):
         return self._bias
+
+    @bias.setter
+    def bias(self, value: NDArray):
+        assert(value.shape == self._bias.shape)
+        self._bias = value.copy()
 
     def learn_weights(self, w_change: NDArray):
         self._weights -= w_change
@@ -171,6 +190,18 @@ class NeuralNetwork:
             if np.argmax(net_output) == np.argmax(expected[i]):
                 correct += 1
         return correct / len(inputs)
+
+    def save_model(self, path: str):
+        model = str(self), [layer.bias for layer in self._layers[1:]], [layer.weights for layer in self._layers[1:]]
+        with open(path, "wb") as f:
+            pickle.dump(model, f)
+
+    def load_model(self, path: str):
+        with open(path, "rb") as f:
+            model_str, biases, weights = pickle.load(f)
+        print(f"Loaded model's net architecture: {model_str}")
+        for layer, bias, weights in zip(self._layers[1:], biases, weights):
+            layer.bias, layer.weights = bias, weights
 
     def __repr__(self):
         return f"NeuralNetwork({str(self._layers)})"

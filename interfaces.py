@@ -36,9 +36,19 @@ class Layer(abc.ABC):
     def weights(self):
         ...
 
+    @weights.setter
+    @abc.abstractmethod
+    def weights(self, weights):
+        ...
+
     @property
     @abc.abstractmethod
     def bias(self):
+        ...
+
+    @bias.setter
+    @abc.abstractmethod
+    def bias(self, bias):
         ...
 
     @abc.abstractmethod

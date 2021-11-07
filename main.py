@@ -22,9 +22,14 @@ def main():
     nn = NeuralNetwork(input_size=784)
     nn.add_layer(Dense(size=128, activation=relu, w_init=gaussian(scale=0.01)))
     nn.add_layer(Dense(size=64, activation=relu, w_init=gaussian(scale=0.01)))
+    nn.add_layer(Dense(size=32, activation=tanh, w_init=gaussian(scale=0.01)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
-    print(nn)
+
     nn.sgd(x_train, y_train, epochs=20, batch_size=50, learning_rate=0.1, test_data=(x_test, y_test))
+
+    nn.save_model('model_data')
+    # nn.load_model('model_data')
+
     print(nn.evaluate(x_test, y_test))
 
 
