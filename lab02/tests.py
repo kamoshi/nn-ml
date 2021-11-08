@@ -94,6 +94,8 @@ test_03 = [
     (32, "sigmoid", 0.01, 10, 0.1),
     (32, "sigmoid", 0.01, 50, 0.1),
     (32, "sigmoid", 0.01, 100, 0.1),
+    (32, "sigmoid", 0.01, 500, 0.1),
+    (32, "sigmoid", 0.01, 1000, 0.1),
 ]
 
 # wpływ inicjalizacji wag
@@ -147,7 +149,8 @@ def main():
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 2
+    processes = 5
+    workers = 10
     with Pool(processes=processes, initializer=init_worker, initargs=(x_train_raw, x_train.shape, x_test_raw, x_test.shape, y_train_raw, y_train.shape, y_test_raw, y_test.shape)) as pool:
         for i, test in enumerate(test_cases):
             print("============\nRunning test", i)
@@ -155,7 +158,7 @@ def main():
                 print("With params:", size, activation, scale, batch_size, learning_rate)
 
                 _worker = functools.partial(worker_func, size, activation, scale, batch_size, learning_rate)
-                epochs, accuracies = zip(*pool.map(_worker, range(processes)))
+                epochs, accuracies = zip(*pool.map(_worker, range(workers)))
 
                 avg_epochs = sum(epochs) / len(epochs)
                 avg_accuracy = sum(accuracies) / len(accuracies)

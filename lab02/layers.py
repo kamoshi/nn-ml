@@ -203,6 +203,7 @@ class NeuralNetwork:
                     return epoch + 1
                 if accuracy > best_accuracy:
                     best_accuracy, best_model = accuracy, self.model
+        self.model = best_model
 
     def evaluate(self, inputs: list[NDArray], expected: list[NDArray]):
         correct = 0
