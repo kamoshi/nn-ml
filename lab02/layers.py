@@ -197,7 +197,7 @@ class NeuralNetwork:
             # Ewaluacja na zbiorze walidacyjnym
             if validate_data is not None:
                 print("Accuracy:", (accuracy := self.evaluate(validate_data[0], validate_data[1])))
-                if stop_early and accuracy <= best_accuracy * 0.95:
+                if stop_early and accuracy <= best_accuracy * 0.98:
                     print("Overfitting, stopping training")
                     self.model = best_model
                     return epoch + 1
