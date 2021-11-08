@@ -19,6 +19,20 @@ FACTS_OR: list[LabelledPoint] = [
     ([1, 1], 1),
 ]
 
+FACTS_XOR = [
+    ([0, 0], 0),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 0),
+]
+
+FACTS_NAND = [
+    ([0, 0], 1),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 0),
+]
+
 
 get_noise = lambda x: random.random() / x
 get_sign = lambda: [-1, 1][random.randint(0, 1)]
@@ -32,3 +46,6 @@ def noisify_point(point: LabelledPoint) -> LabelledPoint:
 
 def convert_points_to_bipolar(points: list[LabelledPoint]) -> list[LabelledPoint]:
     return [((x, y), -1 if c == 0 else 1) for (x, y), c in points]
+
+
+def gen_sequences(length: int, facts): return zip(*[noisify_point(facts[random.randint(0, 3)]) for _ in range(length)])

@@ -49,7 +49,7 @@ def worker_func(
     nn.add_layer(Dense(size=layer_size, activation=activations[layer_activation], w_init=gaussian(scale=initializer_scale)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
 
-    epochs = nn.sgd(x_train, y_train, max_epochs=100, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, test_data=(x_test, y_test))
+    epochs = nn.sgd(x_train, y_train, max_epochs=100, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, validate_data=(x_test, y_test))
     accuracy = nn.evaluate(x_test, y_test)
     print(f"Worker {worker_num} finished")
     return epochs, accuracy
@@ -119,8 +119,8 @@ test_cases = [
 
 
 def main():
-    x_train, y_train = load_mnist('../data/mnist', kind='train')
-    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('data/mnist', kind='train')
+    x_test, y_test = load_mnist('data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 

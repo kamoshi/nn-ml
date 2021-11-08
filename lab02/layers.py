@@ -181,21 +181,26 @@ class NeuralNetwork:
             max_epochs: int,
             batch_size: int,
             stop_early: bool = False,
-            test_data: Tuple[list[NDArray], list[NDArray]] = None
+            validate_data: Tuple[list[NDArray], list[NDArray]] = None
             ):
-        last_accuracy = 0.0
+        best_accuracy = 0.0
+        expected = np.array(expected)
         for epoch in range(max_epochs):
+            # losowanie kolejności danych
+            p = np.random.permutation(len(inputs))
+            inputs, expected = inputs[p], expected[p]
+            # podział na mini-batch
             for i in range(0, len(inputs), batch_size):
                 self.run_mini_batch(inputs[i:i + batch_size], expected[i:i + batch_size], learning_rate)
+
             print(f"Epoch {epoch + 1}/{max_epochs}")
             # Ewaluacja na zbiorze testowym
-            if test_data is not None:
-                accuracy = self.evaluate(test_data[0], test_data[1])
-                print("Accuracy:", accuracy)
-                if stop_early and accuracy <= last_accuracy:
+            if validate_data is not None:
+                print("Accuracy:", (accuracy := self.evaluate(validate_data[0], validate_data[1])))
+                if stop_early and accuracy <= best_accuracy * 0.95:
                     print("Overfitting, stopping training")
                     return epoch + 1
-                last_accuracy = accuracy
+                best_accuracy = max(best_accuracy, accuracy)
 
     def evaluate(self, inputs: list[NDArray], expected: list[NDArray]):
         correct = 0

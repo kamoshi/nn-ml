@@ -3,7 +3,7 @@ from perceptron import simple_learning, step_bipolar
 from shared import FACTS_OR, noisify_point, get_noise, get_sign
 
 
-gen_sequences = lambda l: zip(*[noisify_point(FACTS_OR[random.randint(0, 3)]) for _ in range(l)])
+def gen_sequences(l: int): zip(*[noisify_point(FACTS_OR[random.randint(0, 3)]) for _ in range(l)])
 def gen_weights(l: int = 3, div: int = 10): return [get_noise(div) for _ in range(l)]
 
 
