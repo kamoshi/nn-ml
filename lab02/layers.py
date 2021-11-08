@@ -38,25 +38,25 @@ class Input(Layer):
         return self._size
 
     @property
-    def weights(self):
+    def w(self):
         raise ValueError("weights are not defined for Input layer")
 
-    @weights.setter
-    def weights(self, weights: NDArray):
+    @w.setter
+    def w(self, weights: NDArray):
         raise Exception("Input layer doesn't have weights")
 
     @property
-    def bias(self):
+    def b(self):
         raise ValueError("bias is not defined for Input layer")
 
-    @bias.setter
-    def bias(self, bias: NDArray):
+    @b.setter
+    def b(self, bias: NDArray):
         raise Exception("Input layer doesn't have bias")
 
-    def learn_weights(self, w_change: NDArray):
+    def learn_w(self, w_change: NDArray):
         raise Exception("Input layer cannot learn weights")
 
-    def learn_bias(self, b_change: NDArray):
+    def learn_b(self, b_change: NDArray):
         raise Exception("Input layer cannot learn bias")
 
     def __repr__(self):
@@ -97,27 +97,27 @@ class Dense(Layer):
         return self._size
 
     @property
-    def weights(self):
+    def w(self):
         return self._weights
 
-    @weights.setter
-    def weights(self, value: NDArray):
+    @w.setter
+    def w(self, value: NDArray):
         assert(value.shape == self._weights.shape)
         self._weights = value.copy()
 
     @property
-    def bias(self):
+    def b(self):
         return self._bias
 
-    @bias.setter
-    def bias(self, value: NDArray):
+    @b.setter
+    def b(self, value: NDArray):
         assert(value.shape == self._bias.shape)
         self._bias = value.copy()
 
-    def learn_weights(self, w_change: NDArray):
+    def learn_w(self, w_change: NDArray):
         self._weights -= w_change
 
-    def learn_bias(self, b_change: NDArray):
+    def learn_b(self, b_change: NDArray):
         self._bias -= b_change
 
     def __repr__(self):
@@ -152,7 +152,7 @@ class NeuralNetwork:
             s_l, e_l = -i-3, -i
             backward_layer, current_layer, forward_layer = self._layers[s_l:None if e_l == 0 else e_l]
 
-            nabla_b = delta = np.multiply(np.dot(forward_layer.weights.T, delta.T).T, current_layer.derive())
+            nabla_b = delta = np.multiply(np.dot(forward_layer.w.T, delta.T).T, current_layer.derive())
             nabla_w = np.dot(delta.T, backward_layer.a)
             output.append((nabla_b, nabla_w))
 
@@ -160,8 +160,8 @@ class NeuralNetwork:
 
     def run_mini_batch(self, inputs: NDArray, expected: list[NDArray], learning_rate: float):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
-        sum_nabla_b = [np.zeros(layer.bias.shape) for layer in self._layers[1:][::-1]]
-        sum_nabla_w = [np.zeros(layer.weights.shape) for layer in self._layers[1:][::-1]]
+        sum_nabla_b = [np.zeros(layer.b.shape) for layer in self._layers[1:][::-1]]
+        sum_nabla_w = [np.zeros(layer.w.shape) for layer in self._layers[1:][::-1]]
 
         # Sumowanie wyników z propagacji wstecznej
         for x, y in zip(inputs, expected):
@@ -171,8 +171,8 @@ class NeuralNetwork:
 
         # Aktualizacja wag i biasów
         for layer in self._layers[1:]:  # pomijamy warstwę wejściową
-            layer.learn_weights(learning_rate * sum_nabla_w.pop() / len(inputs))
-            layer.learn_bias(learning_rate * sum_nabla_b.pop() / len(inputs))
+            layer.learn_w(learning_rate * sum_nabla_w.pop() / len(inputs))
+            layer.learn_b(learning_rate * sum_nabla_b.pop() / len(inputs))
 
     def sgd(self,
             inputs: NDArray,
@@ -214,13 +214,13 @@ class NeuralNetwork:
 
     @property
     def model(self) -> Tuple[list[NDArray], list[NDArray]]:
-        return [layer.bias for layer in self._layers[1:]], [layer.weights for layer in self._layers[1:]]
+        return [layer.b for layer in self._layers[1:]], [layer.w for layer in self._layers[1:]]
 
     @model.setter
     def model(self, model):
         all_biases, all_weights = zip(*model)
         for layer, bias, weights in zip(self._layers[1:], all_biases, all_weights):
-            layer.bias, layer.weights = bias, weights
+            layer.b, layer.w = bias, weights
 
     def save_model(self, path: str):
         model = str(self), self.model

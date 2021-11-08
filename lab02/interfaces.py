@@ -33,28 +33,28 @@ class Layer(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def weights(self):
+    def w(self):
         ...
 
-    @weights.setter
+    @w.setter
     @abc.abstractmethod
-    def weights(self, weights):
+    def w(self, weights):
         ...
 
     @property
     @abc.abstractmethod
-    def bias(self):
+    def b(self):
         ...
 
-    @bias.setter
+    @b.setter
     @abc.abstractmethod
-    def bias(self, bias):
-        ...
-
-    @abc.abstractmethod
-    def learn_weights(self, w_change: NDArray):
+    def b(self, bias):
         ...
 
     @abc.abstractmethod
-    def learn_bias(self, b_change: NDArray):
+    def learn_w(self, w_change: NDArray):
+        ...
+
+    @abc.abstractmethod
+    def learn_b(self, b_change: NDArray):
         ...

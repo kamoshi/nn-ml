@@ -143,7 +143,7 @@ def main():
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 10
+    processes = 2
     with Pool(processes=processes, initializer=init_worker, initargs=(x_train_raw, x_train.shape, x_test_raw, x_test.shape, y_train_raw, y_train.shape, y_test_raw, y_test.shape)) as pool:
         for i, test in enumerate(test_cases):
             print("============\nRunning test", i)
