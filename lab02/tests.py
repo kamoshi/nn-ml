@@ -3,6 +3,8 @@ import functools
 import numpy as np
 from multiprocessing import Pool, RawArray
 
+import numpy.random
+
 from activation import softmax, activations
 from initializers import gaussian
 from lab02.layers import NeuralNetwork, Dense
@@ -44,6 +46,8 @@ def worker_func(
     x_test = np.frombuffer(var_dict["x_test"]).reshape(var_dict["x_test_shape"])
     y_train = np.frombuffer(var_dict["y_train"]).reshape(var_dict["y_train_shape"])
     y_test = np.frombuffer(var_dict["y_test"]).reshape(var_dict["y_test_shape"])
+
+    numpy.random.seed(seed=1234)
 
     nn = NeuralNetwork(input_size=784)
     nn.add_layer(Dense(size=layer_size, activation=activations[layer_activation], w_init=gaussian(scale=initializer_scale)))
