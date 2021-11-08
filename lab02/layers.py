@@ -158,7 +158,7 @@ class NeuralNetwork:
 
         return output
 
-    def run_mini_batch(self, inputs: list[NDArray], expected: list[NDArray], learning_rate: float):
+    def run_mini_batch(self, inputs: NDArray, expected: list[NDArray], learning_rate: float):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.bias.shape) for layer in self._layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.weights.shape) for layer in self._layers[1:][::-1]]
@@ -175,7 +175,7 @@ class NeuralNetwork:
             layer.learn_bias(learning_rate * sum_nabla_b.pop() / len(inputs))
 
     def sgd(self,
-            inputs: list[NDArray],
+            inputs: NDArray,
             expected: list[NDArray],
             learning_rate: float,
             max_epochs: int,
@@ -183,7 +183,7 @@ class NeuralNetwork:
             stop_early: bool = False,
             validate_data: Tuple[list[NDArray], list[NDArray]] = None
             ):
-        best_accuracy = 0.0
+        best_accuracy, best_model = 0.0, None
         expected = np.array(expected)
         for epoch in range(max_epochs):
             # losowanie kolejności danych
@@ -192,15 +192,17 @@ class NeuralNetwork:
             # podział na mini-batch
             for i in range(0, len(inputs), batch_size):
                 self.run_mini_batch(inputs[i:i + batch_size], expected[i:i + batch_size], learning_rate)
-
             print(f"Epoch {epoch + 1}/{max_epochs}")
-            # Ewaluacja na zbiorze testowym
+
+            # Ewaluacja na zbiorze walidacyjnym
             if validate_data is not None:
                 print("Accuracy:", (accuracy := self.evaluate(validate_data[0], validate_data[1])))
                 if stop_early and accuracy <= best_accuracy * 0.95:
                     print("Overfitting, stopping training")
+                    self.model = best_model
                     return epoch + 1
-                best_accuracy = max(best_accuracy, accuracy)
+                if accuracy > best_accuracy:
+                    best_accuracy, best_model = accuracy, self.model
 
     def evaluate(self, inputs: list[NDArray], expected: list[NDArray]):
         correct = 0
@@ -210,17 +212,28 @@ class NeuralNetwork:
                 correct += 1
         return correct / len(inputs)
 
+    @property
+    def model(self) -> Tuple[list[NDArray], list[NDArray]]:
+        return [layer.bias for layer in self._layers[1:]], [layer.weights for layer in self._layers[1:]]
+
+    @model.setter
+    def model(self, model):
+        all_biases, all_weights = zip(*model)
+        for layer, bias, weights in zip(self._layers[1:], all_biases, all_weights):
+            layer.bias, layer.weights = bias, weights
+
     def save_model(self, path: str):
-        model = str(self), [layer.bias for layer in self._layers[1:]], [layer.weights for layer in self._layers[1:]]
+        model = str(self), self.model
         with open(path, "wb") as f:
             pickle.dump(model, f)
 
     def load_model(self, path: str):
         with open(path, "rb") as f:
-            model_str, biases, weights = pickle.load(f)
-        print(f"Loaded model's net architecture: {model_str}")
-        for layer, bias, weights in zip(self._layers[1:], biases, weights):
-            layer.bias, layer.weights = bias, weights
+            architecture, model = pickle.load(f)
+        if str(self) != architecture:
+            print(f"Wrong architecture: {architecture}, this net is {self}")
+        else:
+            self.model = model
 
     def __repr__(self):
         return f"NeuralNetwork({str(self._layers)})"

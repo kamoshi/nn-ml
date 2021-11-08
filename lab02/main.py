@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from lab02.activation import relu, tanh, softmax
+from lab02.activation import relu, tanh, softmax, sigmoid
 from lab02.initializers import gaussian
 from lab02.layers import NeuralNetwork, Dense
 from lab02.logic import gen_sequences, FACTS_XOR
@@ -27,7 +27,7 @@ def main():
     # x_test, y_test = gen_sequences(10000, FACTS_XOR)
 
     nn = NeuralNetwork(input_size=784)
-    nn.add_layer(Dense(size=16, activation=relu, w_init=gaussian(scale=0.01)))
+    nn.add_layer(Dense(size=16, activation=sigmoid, w_init=gaussian(scale=0.01)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
 
     nn.sgd(
