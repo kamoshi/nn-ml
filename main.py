@@ -33,7 +33,7 @@ def main():
     nn.sgd(
         x_train,
         y_train,
-        max_epochs=20,
+        max_epochs=1,
         batch_size=50,
         learning_rate=0.1,
         stop_early=True,
