@@ -86,13 +86,13 @@ def worker_func(
 
 
 # rozkręcenie procesora i sprawdzenie czy multiprocessing działa
-test_00 = [
+test_00 = 0, [
     (8, "relu", 0.1, 50, 0.1)
 ]
 
 
 # liczba neuronów w warstwie ukrytej
-test_01 = [
+test_01 = 1, [
     (16, "sigmoid", 0.01, 50, 0.1),
     (32, "sigmoid", 0.01, 50, 0.1),
     (64, "sigmoid", 0.01, 50, 0.1),
@@ -100,7 +100,7 @@ test_01 = [
 ]
 
 # wpływ współczynnika uczenia
-test_02 = [
+test_02 = 2, [
     (32, "sigmoid", 0.01, 50, 0.01),
     (32, "sigmoid", 0.01, 50, 0.1),
     (32, "sigmoid", 0.01, 50, 1),
@@ -108,7 +108,7 @@ test_02 = [
 ]
 
 # wpływ rozmiaru mini-batcha
-test_03 = [
+test_03 = 3, [
     (32, "sigmoid", 0.01, 1, 0.1),
     (32, "sigmoid", 0.01, 10, 0.1),
     (32, "sigmoid", 0.01, 50, 0.1),
@@ -118,15 +118,15 @@ test_03 = [
 ]
 
 # wpływ inicjalizacji wag
-test_04 = [
-    (32, "sigmoid", 10, 50, 0.1),
-    (32, "sigmoid", 1, 50, 0.1),
-    (32, "sigmoid", 0.1, 50, 0.1),
+test_04 = 4, [
     (32, "sigmoid", 0.01, 50, 0.1),
+    (32, "sigmoid", 0.1, 50, 0.1),
+    (32, "sigmoid", 1, 50, 0.1),
+    (32, "sigmoid", 10, 50, 0.1),
 ]
 
 # wpływ aktywacji
-test_05 = [
+test_05 = 5, [
     (32, "sigmoid", 0.01, 50, 0.01),
     (32, "relu", 0.01, 50, 0.01),
     (32, "tanh", 0.01, 50, 0.01),
@@ -134,12 +134,12 @@ test_05 = [
 
 
 test_cases = [
-    test_00,
-    test_01,
-    test_02,
-    test_03,
-    test_04,
+    # test_00,
+    # test_01,
+    # test_02,
+    # test_03,
     test_05,
+    test_04,
 ]
 
 
@@ -187,7 +187,7 @@ def main():
             y_validate_raw, y_validate.shape,
             y_test_raw, y_test.shape,
     )) as pool:
-        for i, test in enumerate(test_cases):
+        for i, test in test_cases:
             print("============\nRunning test", i)
             for size, activation, scale, batch_size, learning_rate in test:
                 print("With params:", size, activation, scale, batch_size, learning_rate)
