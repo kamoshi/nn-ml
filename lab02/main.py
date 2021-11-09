@@ -15,8 +15,8 @@ def to_binary_output(y: int) -> NDArray:
 
 
 def main():
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = list(map(to_binary_output, y_train))
     y_test = list(map(to_binary_output, y_test))
 

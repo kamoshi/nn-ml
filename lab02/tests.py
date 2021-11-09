@@ -119,9 +119,9 @@ test_03 = 3, [
 
 # wpływ inicjalizacji wag
 test_04 = 4, [
-    (32, "sigmoid", 0.01, 50, 0.1),
-    (32, "sigmoid", 0.1, 50, 0.1),
-    (32, "sigmoid", 1, 50, 0.1),
+    # (32, "sigmoid", 0.01, 50, 0.1),
+    # (32, "sigmoid", 0.1, 50, 0.1),
+    # (32, "sigmoid", 1, 50, 0.1),
     (32, "sigmoid", 10, 50, 0.1),
 ]
 
@@ -138,14 +138,14 @@ test_cases = [
     # test_01,
     # test_02,
     # test_03,
-    test_05,
+    # test_05,
     test_04,
 ]
 
 
 def main():
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 
@@ -177,8 +177,8 @@ def main():
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 10
-    workers = 10
+    processes = 1
+    workers = 1
     with Pool(processes=processes, initializer=init_worker, initargs=(
             x_train_raw, x_train.shape,
             x_validate_raw, x_validate.shape,
@@ -202,7 +202,7 @@ def main():
                 print("Avg epochs", avg_epochs, "Avg accuracy", avg_accuracy)
 
                 # append result to file
-                with open("lab02/results.txt", "a") as f:
+                with open("results.txt", "a") as f:
                     f.write(f"{i},{size},{activation},{scale},{batch_size},{learning_rate},{avg_epochs},{avg_accuracy}\n")
 
 
