@@ -15,8 +15,8 @@ def to_binary_output(y: int) -> NDArray:
 
 
 def main():
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = list(map(to_binary_output, y_train))
     y_test = list(map(to_binary_output, y_test))
 
@@ -33,7 +33,7 @@ def main():
     nn.sgd(
         x_train,
         y_train,
-        max_epochs=20,
+        max_epochs=1,
         batch_size=50,
         learning_rate=0.1,
         stop_early=True,

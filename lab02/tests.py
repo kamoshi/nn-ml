@@ -5,10 +5,10 @@ from multiprocessing import Pool, RawArray
 
 import numpy.random
 
-from activation import softmax, activations
-from initializers import gaussian
+from lab02.activation import softmax, activations
+from lab02.initializers import gaussian
 from lab02.layers import NeuralNetwork, Dense
-from utils.mnist_reader import load_mnist
+from lab02.utils.mnist_reader import load_mnist
 
 
 def to_binary_output(y: int) -> np.ndarray:
@@ -72,7 +72,7 @@ def worker_func(
     nn.add_layer(Dense(size=layer_size, activation=activations[layer_activation], w_init=gaussian(scale=initializer_scale)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
 
-    epochs = nn.sgd(x_train, y_train, max_epochs=100, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, validate_data=(x_validate, y_validate))
+    epochs = nn.sgd(x_train, y_train, max_epochs=1000, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, validate_data=(x_validate, y_validate))
     accuracy = nn.evaluate(x_test, y_test)
     print(f"Worker {worker_num} finished")
     return epochs, accuracy
@@ -86,13 +86,13 @@ def worker_func(
 
 
 # rozkręcenie procesora i sprawdzenie czy multiprocessing działa
-test_00 = [
+test_00 = 0, [
     (8, "relu", 0.1, 50, 0.1)
 ]
 
 
 # liczba neuronów w warstwie ukrytej
-test_01 = [
+test_01 = 1, [
     (16, "sigmoid", 0.01, 50, 0.1),
     (32, "sigmoid", 0.01, 50, 0.1),
     (64, "sigmoid", 0.01, 50, 0.1),
@@ -100,7 +100,7 @@ test_01 = [
 ]
 
 # wpływ współczynnika uczenia
-test_02 = [
+test_02 = 2, [
     (32, "sigmoid", 0.01, 50, 0.01),
     (32, "sigmoid", 0.01, 50, 0.1),
     (32, "sigmoid", 0.01, 50, 1),
@@ -108,7 +108,7 @@ test_02 = [
 ]
 
 # wpływ rozmiaru mini-batcha
-test_03 = [
+test_03 = 3, [
     (32, "sigmoid", 0.01, 1, 0.1),
     (32, "sigmoid", 0.01, 10, 0.1),
     (32, "sigmoid", 0.01, 50, 0.1),
@@ -118,15 +118,15 @@ test_03 = [
 ]
 
 # wpływ inicjalizacji wag
-test_04 = [
+test_04 = 4, [
+    # (32, "sigmoid", 0.01, 50, 0.1),
+    # (32, "sigmoid", 0.1, 50, 0.1),
+    # (32, "sigmoid", 1, 50, 0.1),
     (32, "sigmoid", 10, 50, 0.1),
-    (32, "sigmoid", 1, 50, 0.1),
-    (32, "sigmoid", 0.1, 50, 0.1),
-    (32, "sigmoid", 0.01, 50, 0.1),
 ]
 
 # wpływ aktywacji
-test_05 = [
+test_05 = 5, [
     (32, "sigmoid", 0.01, 50, 0.01),
     (32, "relu", 0.01, 50, 0.01),
     (32, "tanh", 0.01, 50, 0.01),
@@ -134,18 +134,18 @@ test_05 = [
 
 
 test_cases = [
-    test_00,
-    test_01,
-    test_02,
-    test_03,
+    # test_00,
+    # test_01,
+    # test_02,
+    # test_03,
+    # test_05,
     test_04,
-    test_05,
 ]
 
 
 def main():
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 
@@ -177,8 +177,8 @@ def main():
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 5
-    workers = 10
+    processes = 1
+    workers = 1
     with Pool(processes=processes, initializer=init_worker, initargs=(
             x_train_raw, x_train.shape,
             x_validate_raw, x_validate.shape,
@@ -187,7 +187,7 @@ def main():
             y_validate_raw, y_validate.shape,
             y_test_raw, y_test.shape,
     )) as pool:
-        for i, test in enumerate(test_cases):
+        for i, test in test_cases:
             print("============\nRunning test", i)
             for size, activation, scale, batch_size, learning_rate in test:
                 print("With params:", size, activation, scale, batch_size, learning_rate)

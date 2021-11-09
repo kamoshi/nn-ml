@@ -1,9 +1,11 @@
 import pickle
+from collections import deque
+from itertools import combinations
 from typing import Callable, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from interfaces import Layer
+from lab02.interfaces import Layer
 
 
 class Input(Layer):
@@ -184,6 +186,7 @@ class NeuralNetwork:
             validate_data: Tuple[list[NDArray], list[NDArray]] = None
             ):
         best_accuracy, best_model = 0.0, None
+        last_scores = deque((best_accuracy,), maxlen=7)
         expected = np.array(expected)
         for epoch in range(max_epochs):
             # losowanie kolejności danych
@@ -196,8 +199,10 @@ class NeuralNetwork:
 
             # Ewaluacja na zbiorze walidacyjnym
             if validate_data is not None:
-                print("Accuracy:", (accuracy := self.evaluate(validate_data[0], validate_data[1])))
-                if stop_early and accuracy <= best_accuracy * 0.98:
+                print("Accuracy:", last_scores[-1], "->", (accuracy := self.evaluate(validate_data[0], validate_data[1])), "best:", best_accuracy)
+                last_scores.append(accuracy)
+
+                if stop_early and best_accuracy not in last_scores:
                     print("Overfitting, stopping training")
                     self.model = best_model
                     return epoch + 1
@@ -219,9 +224,10 @@ class NeuralNetwork:
 
     @model.setter
     def model(self, model):
-        all_biases, all_weights = zip(*model)
+        all_biases, all_weights = model
         for layer, bias, weights in zip(self._layers[1:], all_biases, all_weights):
-            layer.b, layer.w = bias, weights
+            layer.b = bias
+            layer.w = weights
 
     def save_model(self, path: str):
         model = str(self), self.model
