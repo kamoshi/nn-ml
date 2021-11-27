@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from lab02.activation import relu, tanh, softmax, sigmoid
-from lab02.initializers import gaussian
-from lab02.layers import NeuralNetwork, Dense
-from lab02.logic import gen_sequences, FACTS_XOR
+from lab02.logic.activation import softmax, sigmoid
+from lab02.logic.initializers import gaussian
+from lab02.logic.layers.dense import Dense
+from lab02.logic.network import NeuralNetwork
 from lab02.utils.mnist_reader import load_mnist
 
 

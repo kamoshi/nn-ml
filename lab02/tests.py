@@ -5,9 +5,9 @@ from multiprocessing import Pool, RawArray
 
 import numpy.random
 
-from lab02.activation import softmax, activations
-from lab02.initializers import gaussian
-from lab02.layers import NeuralNetwork, Dense
+from lab02.logic.activation import softmax, activations
+from lab02.logic.initializers import gaussian
+from lab02.logic.layers.layers import NeuralNetwork, Dense
 from lab02.utils.mnist_reader import load_mnist
 
 
