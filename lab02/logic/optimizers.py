@@ -126,10 +126,12 @@ class Adagrad:
 
 
 class Adadelta:
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, epsilon: float = 1e-8):
-        self.alpha, self.epsilon = alpha, epsilon
+    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9, epsilon: float = 1e-8):
+        self.alpha, self.gamma, self.epsilon = alpha, gamma, epsilon
         self.cache_grad_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
+        self.cache_grad_b_p = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
+        self.cache_grad_w_p = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
     def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
@@ -143,14 +145,23 @@ class Adadelta:
             sum_nabla_w = [snw + bnw for snw, bnw in zip(sum_nabla_w, b_nabla_w)]
 
         # Zapisywanie poprzedniej aktualizacji
-        self.cache_grad_b = [cgb + ((snb / len(inputs)) ** 2) for snb, cgb in zip(sum_nabla_b, self.cache_grad_b)]
-        self.cache_grad_w = [cgw + ((snw / len(inputs)) ** 2) for snw, cgw in zip(sum_nabla_w, self.cache_grad_w)]
+        self.cache_grad_b = [self.gamma * cgb + (1 - self.gamma) * (snb / len(inputs)) ** 2 for cgb, snb in zip(self.cache_grad_b, sum_nabla_b)]
+        self.cache_grad_w = [self.gamma * cgw + (1 - self.gamma) * (snw / len(inputs)) ** 2 for cgw, snw in zip(self.cache_grad_w, sum_nabla_w)]
 
-        # Aplikowanie cache
-        update_b = [self.alpha * snb / np.sqrt(cgb + self.epsilon) for snb, cgb in zip(sum_nabla_b, self.cache_grad_b)]
-        update_w = [self.alpha * snw / np.sqrt(cgw + self.epsilon) for snw, cgw in zip(sum_nabla_w, self.cache_grad_w)]
+        rms_b = [np.sqrt(cgb + self.epsilon) for cgb in self.cache_grad_b]
+        rms_w = [np.sqrt(cgw + self.epsilon) for cgw in self.cache_grad_w]
+
+        d_theta_b = [self.alpha / rb * cgb for rb, cgb in zip(rms_b, self.cache_grad_b)]
+        d_theta_w = [self.alpha / rw * cgw for rw, cgw in zip(rms_w, self.cache_grad_w)]
+        self.cache_grad_b_p = [self.gamma * cgbp + (1 - self.gamma) * dtb ** 2 for cgbp, dtb in zip(self.cache_grad_b_p, d_theta_b)]
+        self.cache_grad_w_p = [self.gamma * cgwp + (1 - self.gamma) * dtw ** 2 for cgwp, dtw in zip(self.cache_grad_w_p, d_theta_w)]
+        rms_theta_b = [np.sqrt(cgbp + self.epsilon) for cgbp in self.cache_grad_b_p]
+        rms_theta_w = [np.sqrt(cgwp + self.epsilon) for cgwp in self.cache_grad_w_p]
+
+        updates_b = [(rtb / rmsb * snb / len(inputs)) for rtb, rmsb, snb in zip(rms_theta_b, rms_b, sum_nabla_b)]
+        updates_w = [(rtw / rmsw * snw / len(inputs)) for rtw, rmsw, snw in zip(rms_theta_w, rms_w, sum_nabla_w)]
 
         # Aktualizacja wag i biasów
         for layer in nn.layers[1:]:  # pomijamy warstwę wejściową
-            layer.learn_b(update_b.pop() / len(inputs))
-            layer.learn_w(update_w.pop() / len(inputs))
+            layer.learn_b(updates_b.pop())
+            layer.learn_w(updates_w.pop())

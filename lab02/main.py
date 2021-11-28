@@ -39,7 +39,7 @@ def main():
         learning_rate=0.1,
         stop_early=True,
         validate_data=(x_validate, y_validate),
-        optimizer=optimizers.Adagrad
+        optimizer=optimizers.Adadelta
     )
 
     print("Test score evaluation:", nn.evaluate(x_test, y_test))
