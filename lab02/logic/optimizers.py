@@ -26,6 +26,7 @@ class Default(Optimizer):
             layer.learn_b(self.alpha * sum_nabla_b.pop() / len(inputs))
 
 
+# noinspection DuplicatedCode
 class Momentum(Optimizer):
     def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9):
         self.alpha, self.gamma = alpha, gamma
@@ -55,6 +56,7 @@ class Momentum(Optimizer):
             layer.learn_b(sum_nabla_b.pop() / len(inputs))
 
 
+# noinspection DuplicatedCode
 class Nesterov(Optimizer):
     def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9):
         self.alpha, self.gamma = alpha, gamma
@@ -125,6 +127,7 @@ class Adagrad:
             layer.learn_w(update_w.pop() / len(inputs))
 
 
+# noinspection DuplicatedCode
 class Adadelta:
     def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9, epsilon: float = 1e-8):
         self.alpha, self.gamma, self.epsilon = alpha, gamma, epsilon
@@ -165,3 +168,42 @@ class Adadelta:
         for layer in nn.layers[1:]:  # pomijamy warstwę wejściową
             layer.learn_b(updates_b.pop())
             layer.learn_w(updates_w.pop())
+
+
+# noinspection DuplicatedCode
+class Adam:
+    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-8):
+        self.alpha, self.beta1, self.beta2, self.epsilon = alpha, beta1, beta2, epsilon
+        self.cache_m_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
+        self.cache_v_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
+        self.cache_m_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
+        self.cache_v_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
+
+    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+        # Przechowywanie sumy nabli wag i sumy nabli biasów
+        sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
+        sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
+
+        # Sumowanie wyników z propagacji wstecznej
+        for x, y in zip(inputs, expected):
+            b_nabla_b, b_nabla_w = zip(*nn.backpropagate(x, y))
+            sum_nabla_b = [snb + bnb for snb, bnb in zip(sum_nabla_b, b_nabla_b)]
+            sum_nabla_w = [snw + bnw for snw, bnw in zip(sum_nabla_w, b_nabla_w)]
+
+        self.cache_m_b = [self.beta1 * cmb + (1 - self.beta1) * (snb / len(inputs)) for cmb, snb in zip(self.cache_m_b, sum_nabla_b)]
+        self.cache_v_b = [self.beta2 * cvb + (1 - self.beta2) * (snb / len(inputs)) ** 2 for cvb, snb in zip(self.cache_v_b, sum_nabla_b)]
+        self.cache_m_w = [self.beta1 * cmw + (1 - self.beta1) * (snw / len(inputs)) for cmw, snw in zip(self.cache_m_w, sum_nabla_w)]
+        self.cache_v_w = [self.beta2 * cvw + (1 - self.beta2) * (snw / len(inputs)) ** 2 for cvw, snw in zip(self.cache_v_w, sum_nabla_w)]
+
+        mt_hat_b = [mtb / (1 - self.beta1) for mtb in self.cache_m_b]
+        vt_hat_b = [vtb / (1 - self.beta2) for vtb in self.cache_v_b]
+        update_b = [self.alpha / (np.sqrt(vthat) + self.epsilon) * mthat for mthat, vthat in zip(mt_hat_b, vt_hat_b)]
+
+        mt_hat_w = [mtw / (1 - self.beta1) for mtw in self.cache_m_w]
+        vt_hat_w = [vtw / (1 - self.beta2) for vtw in self.cache_v_w]
+        update_w = [self.alpha / (np.sqrt(vthat) + self.epsilon) * mthat for mthat, vthat in zip(mt_hat_w, vt_hat_w)]
+
+        # Aktualizacja wag i biasów
+        for layer in nn.layers[1:]:  # pomijamy warstwę wejściową
+            layer.learn_b(update_b.pop() / len(inputs))
+            layer.learn_w(update_w.pop() / len(inputs))
