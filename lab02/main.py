@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
+from lab02.logic import optimizers
 from lab02.logic.activation import softmax, sigmoid
 from lab02.logic.initializers import gaussian
 from lab02.logic.layers.dense import Dense
@@ -37,11 +38,9 @@ def main():
         batch_size=50,
         learning_rate=0.1,
         stop_early=True,
-        validate_data=(x_validate, y_validate)
+        validate_data=(x_validate, y_validate),
+        optimizer=optimizers.Adagrad
     )
-
-    # nn.save_model('model_data')
-    # nn.load_model('model_data')
 
     print("Test score evaluation:", nn.evaluate(x_test, y_test))
 

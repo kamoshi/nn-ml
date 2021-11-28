@@ -43,22 +43,6 @@ class NeuralNetwork:
 
         return output
 
-    def run_mini_batch(self, inputs: NDArray, expected: list[NDArray], learning_rate: float):
-        # Przechowywanie sumy nabli wag i sumy nabli biasów
-        sum_nabla_b = [np.zeros(layer.b.shape) for layer in self._layers[1:][::-1]]
-        sum_nabla_w = [np.zeros(layer.w.shape) for layer in self._layers[1:][::-1]]
-
-        # Sumowanie wyników z propagacji wstecznej
-        for x, y in zip(inputs, expected):
-            b_nabla_b, b_nabla_w = zip(*self.backpropagate(x, y))
-            sum_nabla_b = [np.add(snb, bnb) for snb, bnb in zip(sum_nabla_b, b_nabla_b)]
-            sum_nabla_w = [np.add(snw, bnw) for snw, bnw in zip(sum_nabla_w, b_nabla_w)]
-
-        # Aktualizacja wag i biasów
-        for layer in self._layers[1:]:  # pomijamy warstwę wejściową
-            layer.learn_w(learning_rate * sum_nabla_w.pop() / len(inputs))
-            layer.learn_b(learning_rate * sum_nabla_b.pop() / len(inputs))
-
     def sgd(self,
             inputs: NDArray,
             expected: list[NDArray],
@@ -66,8 +50,11 @@ class NeuralNetwork:
             max_epochs: int,
             batch_size: int,
             stop_early: bool = False,
-            validate_data: Tuple[list[NDArray], list[NDArray]] = None
+            validate_data: Tuple[list[NDArray], list[NDArray]] = None,
+            optimizer=None,
+            gamma=None,
             ):
+        optimizer = optimizer(self, learning_rate)
         best_accuracy, best_model = 0.0, None
         last_scores = deque((best_accuracy,), maxlen=7)
         expected = np.array(expected)
@@ -77,7 +64,11 @@ class NeuralNetwork:
             inputs, expected = inputs[p], expected[p]
             # podział na mini-batch
             for i in range(0, len(inputs), batch_size):
-                self.run_mini_batch(inputs[i:i + batch_size], expected[i:i + batch_size], learning_rate)
+                optimizer.run_update(
+                    self,
+                    inputs[i:i + batch_size],
+                    expected[i:i + batch_size],
+                )
             print(f"Epoch {epoch + 1}/{max_epochs}")
 
             # Ewaluacja na zbiorze walidacyjnym
@@ -100,6 +91,10 @@ class NeuralNetwork:
             if np.argmax(net_output) == np.argmax(expected[i]):
                 correct += 1
         return correct / len(inputs)
+
+    @property
+    def layers(self):
+        return self._layers.copy()
 
     @property
     def model(self) -> Tuple[list[NDArray], list[NDArray]]:

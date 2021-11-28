@@ -58,3 +58,8 @@ class Layer(abc.ABC):
     @abc.abstractmethod
     def learn_b(self, b_change: NDArray):
         ...
+
+
+class Optimizer(abc.ABC):
+    def find_update(self, *args, **kwargs):
+        pass
