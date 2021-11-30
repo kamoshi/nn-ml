@@ -5,6 +5,7 @@ from typing import Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+from lab02.logic import optimizers
 from lab02.logic.interfaces import Layer
 from lab02.logic.layers.input import Input
 
@@ -51,10 +52,10 @@ class NeuralNetwork:
             batch_size: int,
             stop_early: bool = False,
             validate_data: Tuple[list[NDArray], list[NDArray]] = None,
-            optimizer=None,
-            gamma=None,
+            optimizer=optimizers.Default,
+            optimizer_kwargs: dict = None,
             ):
-        optimizer = optimizer(self, learning_rate)
+        optimizer = optimizer(self, **(optimizer_kwargs or {}))
         best_accuracy, best_model = 0.0, None
         last_scores = deque((best_accuracy,), maxlen=7)
         expected = np.array(expected)
@@ -69,15 +70,16 @@ class NeuralNetwork:
                     inputs[i:i + batch_size],
                     expected[i:i + batch_size],
                 )
-            print(f"Epoch {epoch + 1}/{max_epochs}")
+            # print(f"Epoch {epoch + 1}/{max_epochs}")
 
             # Ewaluacja na zbiorze walidacyjnym
             if validate_data is not None:
-                print("Accuracy:", last_scores[-1], "->", (accuracy := self.evaluate(validate_data[0], validate_data[1])), "best:", best_accuracy)
+                accuracy = self.evaluate(validate_data[0], validate_data[1])
+                # print("Epoch:", epoch, "Accuracy:", accuracy, "best:", best_accuracy)
                 last_scores.append(accuracy)
 
                 if stop_early and best_accuracy not in last_scores:
-                    print("Overfitting, stopping training")
+                    # print("Stopping training")
                     self.model = best_model
                     return epoch + 1
                 if accuracy > best_accuracy:

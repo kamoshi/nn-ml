@@ -2,14 +2,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lab02.logic.interfaces import Optimizer
-from lab02.logic.network import NeuralNetwork
 
 
 class Default(Optimizer):
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9):
-        self.alpha, self.gamma = alpha, gamma
+    def __init__(self, nn, alpha: float = 0.9):
+        self.alpha = alpha
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray, learning_rate: float):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -25,15 +24,18 @@ class Default(Optimizer):
             layer.learn_w(self.alpha * sum_nabla_w.pop() / len(inputs))
             layer.learn_b(self.alpha * sum_nabla_b.pop() / len(inputs))
 
+    def __repr__(self):
+        return f"Optimizer.Default({self.alpha})"
+
 
 # noinspection DuplicatedCode
 class Momentum(Optimizer):
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9):
+    def __init__(self, nn, alpha: float = 0.1, gamma: float = 0.8):
         self.alpha, self.gamma = alpha, gamma
         self.cache_grad_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -55,15 +57,18 @@ class Momentum(Optimizer):
             layer.learn_w(sum_nabla_w.pop() / len(inputs))
             layer.learn_b(sum_nabla_b.pop() / len(inputs))
 
+    def __repr__(self):
+        return f"Optimizer.Momentum({self.alpha}, {self.gamma})"
+
 
 # noinspection DuplicatedCode
 class Nesterov(Optimizer):
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9):
+    def __init__(self, nn, alpha: float = 0.1, gamma: float = 0.8):
         self.alpha, self.gamma = alpha, gamma
         self.cache_grad_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -95,14 +100,17 @@ class Nesterov(Optimizer):
             layer.learn_w(self.alpha * sum_nabla_w.pop() / len(inputs))
             layer.learn_b(self.alpha * sum_nabla_b.pop() / len(inputs))
 
+    def __repr__(self):
+        return f"Optimizer.Nesterov({self.alpha}, {self.gamma})"
+
 
 class Adagrad:
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, epsilon: float = 1e-8):
+    def __init__(self, nn, alpha: float = 0.1, epsilon: float = 1e-8):
         self.alpha, self.epsilon = alpha, epsilon
         self.cache_grad_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -126,17 +134,20 @@ class Adagrad:
             layer.learn_b(update_b.pop() / len(inputs))
             layer.learn_w(update_w.pop() / len(inputs))
 
+    def __repr__(self):
+        return f"Optimizer.Adagrad({self.alpha}, {self.epsilon})"
+
 
 # noinspection DuplicatedCode
 class Adadelta:
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, gamma: float = 0.9, epsilon: float = 1e-8):
+    def __init__(self, nn, alpha: float = 0.1, gamma: float = 0.9, epsilon: float = 1e-8):
         self.alpha, self.gamma, self.epsilon = alpha, gamma, epsilon
         self.cache_grad_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_b_p = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_grad_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
         self.cache_grad_w_p = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -148,16 +159,20 @@ class Adadelta:
             sum_nabla_w = [snw + bnw for snw, bnw in zip(sum_nabla_w, b_nabla_w)]
 
         # Zapisywanie poprzedniej aktualizacji
-        self.cache_grad_b = [self.gamma * cgb + (1 - self.gamma) * (snb / len(inputs)) ** 2 for cgb, snb in zip(self.cache_grad_b, sum_nabla_b)]
-        self.cache_grad_w = [self.gamma * cgw + (1 - self.gamma) * (snw / len(inputs)) ** 2 for cgw, snw in zip(self.cache_grad_w, sum_nabla_w)]
+        self.cache_grad_b = [self.gamma * cgb + (1 - self.gamma) * (snb / len(inputs)) ** 2 for cgb, snb in
+                             zip(self.cache_grad_b, sum_nabla_b)]
+        self.cache_grad_w = [self.gamma * cgw + (1 - self.gamma) * (snw / len(inputs)) ** 2 for cgw, snw in
+                             zip(self.cache_grad_w, sum_nabla_w)]
 
         rms_b = [np.sqrt(cgb + self.epsilon) for cgb in self.cache_grad_b]
         rms_w = [np.sqrt(cgw + self.epsilon) for cgw in self.cache_grad_w]
 
         d_theta_b = [self.alpha / rb * cgb for rb, cgb in zip(rms_b, self.cache_grad_b)]
         d_theta_w = [self.alpha / rw * cgw for rw, cgw in zip(rms_w, self.cache_grad_w)]
-        self.cache_grad_b_p = [self.gamma * cgbp + (1 - self.gamma) * dtb ** 2 for cgbp, dtb in zip(self.cache_grad_b_p, d_theta_b)]
-        self.cache_grad_w_p = [self.gamma * cgwp + (1 - self.gamma) * dtw ** 2 for cgwp, dtw in zip(self.cache_grad_w_p, d_theta_w)]
+        self.cache_grad_b_p = [self.gamma * cgbp + (1 - self.gamma) * dtb ** 2 for cgbp, dtb in
+                               zip(self.cache_grad_b_p, d_theta_b)]
+        self.cache_grad_w_p = [self.gamma * cgwp + (1 - self.gamma) * dtw ** 2 for cgwp, dtw in
+                               zip(self.cache_grad_w_p, d_theta_w)]
         rms_theta_b = [np.sqrt(cgbp + self.epsilon) for cgbp in self.cache_grad_b_p]
         rms_theta_w = [np.sqrt(cgwp + self.epsilon) for cgwp in self.cache_grad_w_p]
 
@@ -169,17 +184,20 @@ class Adadelta:
             layer.learn_b(updates_b.pop())
             layer.learn_w(updates_w.pop())
 
+    def __repr__(self):
+        return f"Optimizer.Adadelta({self.alpha}, {self.gamma}, {self.epsilon})"
+
 
 # noinspection DuplicatedCode
 class Adam:
-    def __init__(self, nn: NeuralNetwork, alpha: float = 0.9, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-8):
+    def __init__(self, nn, alpha: float = 0.1, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-8):
         self.alpha, self.beta1, self.beta2, self.epsilon = alpha, beta1, beta2, epsilon
         self.cache_m_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_v_b = [np.zeros(b.shape) for b in nn.model[0]][::-1]
         self.cache_m_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
         self.cache_v_w = [np.zeros(b.shape) for b in nn.model[1]][::-1]
 
-    def run_update(self, nn: NeuralNetwork, inputs: NDArray, expected: NDArray):
+    def run_update(self, nn, inputs: NDArray, expected: NDArray):
         # Przechowywanie sumy nabli wag i sumy nabli biasów
         sum_nabla_b = [np.zeros(layer.b.shape) for layer in nn.layers[1:][::-1]]
         sum_nabla_w = [np.zeros(layer.w.shape) for layer in nn.layers[1:][::-1]]
@@ -190,10 +208,14 @@ class Adam:
             sum_nabla_b = [snb + bnb for snb, bnb in zip(sum_nabla_b, b_nabla_b)]
             sum_nabla_w = [snw + bnw for snw, bnw in zip(sum_nabla_w, b_nabla_w)]
 
-        self.cache_m_b = [self.beta1 * cmb + (1 - self.beta1) * (snb / len(inputs)) for cmb, snb in zip(self.cache_m_b, sum_nabla_b)]
-        self.cache_v_b = [self.beta2 * cvb + (1 - self.beta2) * (snb / len(inputs)) ** 2 for cvb, snb in zip(self.cache_v_b, sum_nabla_b)]
-        self.cache_m_w = [self.beta1 * cmw + (1 - self.beta1) * (snw / len(inputs)) for cmw, snw in zip(self.cache_m_w, sum_nabla_w)]
-        self.cache_v_w = [self.beta2 * cvw + (1 - self.beta2) * (snw / len(inputs)) ** 2 for cvw, snw in zip(self.cache_v_w, sum_nabla_w)]
+        self.cache_m_b = [self.beta1 * cmb + (1 - self.beta1) * (snb / len(inputs)) for cmb, snb in
+                          zip(self.cache_m_b, sum_nabla_b)]
+        self.cache_v_b = [self.beta2 * cvb + (1 - self.beta2) * (snb / len(inputs)) ** 2 for cvb, snb in
+                          zip(self.cache_v_b, sum_nabla_b)]
+        self.cache_m_w = [self.beta1 * cmw + (1 - self.beta1) * (snw / len(inputs)) for cmw, snw in
+                          zip(self.cache_m_w, sum_nabla_w)]
+        self.cache_v_w = [self.beta2 * cvw + (1 - self.beta2) * (snw / len(inputs)) ** 2 for cvw, snw in
+                          zip(self.cache_v_w, sum_nabla_w)]
 
         mt_hat_b = [mtb / (1 - self.beta1) for mtb in self.cache_m_b]
         vt_hat_b = [vtb / (1 - self.beta2) for vtb in self.cache_v_b]
@@ -207,3 +229,6 @@ class Adam:
         for layer in nn.layers[1:]:  # pomijamy warstwę wejściową
             layer.learn_b(update_b.pop() / len(inputs))
             layer.learn_w(update_w.pop() / len(inputs))
+
+    def __repr__(self):
+        return f"Optimizer.Adam({self.alpha}, {self.beta1}, {self.beta2}, {self.epsilon})"

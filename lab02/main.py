@@ -2,8 +2,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from lab02.logic import optimizers
-from lab02.logic.activation import softmax, sigmoid
-from lab02.logic.initializers import gaussian
+from lab02.logic.activation import softmax, sigmoid, relu
+from lab02.logic.initializers import gaussian, he, xavier
 from lab02.logic.layers.dense import Dense
 from lab02.logic.network import NeuralNetwork
 from lab02.utils.mnist_reader import load_mnist
@@ -21,28 +21,61 @@ def main():
     y_train = list(map(to_binary_output, y_train))
     y_test = list(map(to_binary_output, y_test))
 
-    x_train, x_validate = x_train[10000:], x_train[:10000]
-    y_train, y_validate = y_train[10000:], y_train[:10000]
+    x_train, x_validate = x_train[50000:], x_train[:10000]
+    y_train, y_validate = y_train[50000:], y_train[:10000]
 
     # x_train, y_train = gen_sequences(50000, FACTS_XOR)
     # x_test, y_test = gen_sequences(10000, FACTS_XOR)
 
-    nn = NeuralNetwork(input_size=784)
-    nn.add_layer(Dense(size=16, activation=sigmoid, w_init=gaussian(scale=0.01)))
-    nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
+    for i in range(2):
+        print(i)
+        print("==== inicjalizacja rozkladem normalnym ====")
+        nn = NeuralNetwork(input_size=784)
+        nn.add_layer(Dense(size=64, activation=sigmoid, w_init=gaussian(scale=0.1)))
+        nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian(scale=0.1)))
+        res = nn.sgd(
+            x_train,
+            y_train,
+            max_epochs=200,
+            batch_size=50,
+            learning_rate=0.1,
+            stop_early=True,
+            validate_data=(x_validate, y_validate),
+            optimizer=optimizers.Default,
+        )
+        print("Epoki:", res, "Dokładność:", nn.evaluate(x_test, y_test))
 
-    nn.sgd(
-        x_train,
-        y_train,
-        max_epochs=1,
-        batch_size=50,
-        learning_rate=0.1,
-        stop_early=True,
-        validate_data=(x_validate, y_validate),
-        optimizer=optimizers.Adam
-    )
+        print("==== inicjalizacja xaviera ====")
+        nn = NeuralNetwork(input_size=784)
+        nn.add_layer(Dense(size=64, activation=sigmoid, w_init=xavier))
+        nn.add_layer(Dense(size=10, activation=softmax, w_init=xavier))
+        res = nn.sgd(
+            x_train,
+            y_train,
+            max_epochs=200,
+            batch_size=50,
+            learning_rate=0.1,
+            stop_early=True,
+            validate_data=(x_validate, y_validate),
+            optimizer=optimizers.Default,
+        )
+        print("Epoki:", res, "Dokładność:", nn.evaluate(x_test, y_test))
 
-    print("Test score evaluation:", nn.evaluate(x_test, y_test))
+        print("==== inicjalizacja he ====")
+        nn = NeuralNetwork(input_size=784)
+        nn.add_layer(Dense(size=64, activation=sigmoid, w_init=he))
+        nn.add_layer(Dense(size=10, activation=softmax, w_init=he))
+        res = nn.sgd(
+            x_train,
+            y_train,
+            max_epochs=200,
+            batch_size=50,
+            learning_rate=0.1,
+            stop_early=True,
+            validate_data=(x_validate, y_validate),
+            optimizer=optimizers.Default,
+        )
+        print("Epoki:", res, "Dokładność:", nn.evaluate(x_test, y_test))
 
 
 if __name__ == '__main__':

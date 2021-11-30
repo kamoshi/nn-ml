@@ -5,9 +5,11 @@ from multiprocessing import Pool, RawArray
 
 import numpy.random
 
+from lab02.logic import optimizers
 from lab02.logic.activation import softmax, activations
 from lab02.logic.initializers import gaussian
-from lab02.logic.layers.layers import NeuralNetwork, Dense
+from lab02.logic.layers.dense import Dense
+from lab02.logic.network import NeuralNetwork
 from lab02.utils.mnist_reader import load_mnist
 
 
@@ -51,11 +53,8 @@ def init_worker(
 
 # funkcja obliczająca wynik dla danego procesu
 def worker_func(
-        layer_size: int,
-        layer_activation: str,
-        initializer_scale: float,
-        batch_size: int,
-        learning_rate: float,
+        layer_activation,
+        optimizer,
         worker_num: int,
 ):
     print(f"Worker {worker_num} started")
@@ -69,10 +68,19 @@ def worker_func(
     numpy.random.seed(seed=worker_num)
 
     nn = NeuralNetwork(input_size=784)
-    nn.add_layer(Dense(size=layer_size, activation=activations[layer_activation], w_init=gaussian(scale=initializer_scale)))
+    nn.add_layer(Dense(size=32, activation=activations[layer_activation], w_init=gaussian(scale=0.01)))
     nn.add_layer(Dense(size=10, activation=softmax, w_init=gaussian()))
 
-    epochs = nn.sgd(x_train, y_train, max_epochs=1000, batch_size=batch_size, learning_rate=learning_rate, stop_early=True, validate_data=(x_validate, y_validate))
+    epochs = nn.sgd(
+        x_train,
+        y_train,
+        max_epochs=1000,
+        batch_size=50,
+        learning_rate=0.1,
+        stop_early=True,
+        validate_data=(x_validate, y_validate),
+        optimizer=optimizer
+    )
     accuracy = nn.evaluate(x_test, y_test)
     print(f"Worker {worker_num} finished")
     return epochs, accuracy
@@ -87,65 +95,31 @@ def worker_func(
 
 # rozkręcenie procesora i sprawdzenie czy multiprocessing działa
 test_00 = 0, [
-    (8, "relu", 0.1, 50, 0.1)
+    ('relu', optimizers.Default),
 ]
 
-
-# liczba neuronów w warstwie ukrytej
 test_01 = 1, [
-    (16, "sigmoid", 0.01, 50, 0.1),
-    (32, "sigmoid", 0.01, 50, 0.1),
-    (64, "sigmoid", 0.01, 50, 0.1),
-    (128, "sigmoid", 0.01, 50, 0.1),
+    ('sigmoid', optimizers.Momentum),
+    ('sigmoid', optimizers.Nesterov),
+    ('sigmoid', optimizers.Adagrad),
+    ('sigmoid', optimizers.Adadelta),
+    ('sigmoid', optimizers.Adam),
 ]
 
-# wpływ współczynnika uczenia
 test_02 = 2, [
-    (32, "sigmoid", 0.01, 50, 0.01),
-    (32, "sigmoid", 0.01, 50, 0.1),
-    (32, "sigmoid", 0.01, 50, 1),
-    (32, "sigmoid", 0.01, 50, 10),
+    ('relu', optimizers.Momentum),
+    ('relu', optimizers.Nesterov),
+    ('relu', optimizers.Adagrad),
+    ('relu', optimizers.Adadelta),
+    ('relu', optimizers.Adam),
 ]
 
-# wpływ rozmiaru mini-batcha
-test_03 = 3, [
-    (32, "sigmoid", 0.01, 1, 0.1),
-    (32, "sigmoid", 0.01, 10, 0.1),
-    (32, "sigmoid", 0.01, 50, 0.1),
-    (32, "sigmoid", 0.01, 100, 0.1),
-    (32, "sigmoid", 0.01, 500, 0.1),
-    (32, "sigmoid", 0.01, 1000, 0.1),
-]
-
-# wpływ inicjalizacji wag
-test_04 = 4, [
-    # (32, "sigmoid", 0.01, 50, 0.1),
-    # (32, "sigmoid", 0.1, 50, 0.1),
-    # (32, "sigmoid", 1, 50, 0.1),
-    (32, "sigmoid", 10, 50, 0.1),
-]
-
-# wpływ aktywacji
-test_05 = 5, [
-    (32, "sigmoid", 0.01, 50, 0.01),
-    (32, "relu", 0.01, 50, 0.01),
-    (32, "tanh", 0.01, 50, 0.01),
-]
-
-
-test_cases = [
-    # test_00,
-    # test_01,
-    # test_02,
-    # test_03,
-    # test_05,
-    test_04,
-]
+test_cases = [test_00, test_01, test_02]
 
 
 def main():
-    x_train, y_train = load_mnist('../data/mnist', kind='train')
-    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('data/mnist', kind='train')
+    x_test, y_test = load_mnist('data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 
@@ -177,8 +151,8 @@ def main():
     np.copyto(y_test_np, y_test)
 
     # tworzenie procesów
-    processes = 1
-    workers = 1
+    processes = 10
+    workers = 5
     with Pool(processes=processes, initializer=init_worker, initargs=(
             x_train_raw, x_train.shape,
             x_validate_raw, x_validate.shape,
@@ -189,10 +163,10 @@ def main():
     )) as pool:
         for i, test in test_cases:
             print("============\nRunning test", i)
-            for size, activation, scale, batch_size, learning_rate in test:
-                print("With params:", size, activation, scale, batch_size, learning_rate)
+            for activation, optimizer in test:
+                print("With params:", activation, optimizer.__name__)
 
-                _worker = functools.partial(worker_func, size, activation, scale, batch_size, learning_rate)
+                _worker = functools.partial(worker_func, activation, optimizer)
                 epochs, accuracies = zip(*pool.map(_worker, range(workers)))
 
                 avg_epochs = sum(epochs) / len(epochs)
@@ -202,8 +176,8 @@ def main():
                 print("Avg epochs", avg_epochs, "Avg accuracy", avg_accuracy)
 
                 # append result to file
-                with open("results.txt", "a") as f:
-                    f.write(f"{i},{size},{activation},{scale},{batch_size},{learning_rate},{avg_epochs},{avg_accuracy}\n")
+                with open("lab02/results.csv", "a") as f:
+                    f.write(f"{i},{activation},{optimizer.__name__},{avg_epochs},{avg_accuracy}\n")
 
 
 if __name__ == '__main__':
