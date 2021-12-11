@@ -1,0 +1,11 @@
+0,relu,Default,12.2,0.3378
+1,sigmoid,Momentum,28.2,0.96416
+1,sigmoid,Nesterov,79.2,0.9623799999999999
+1,sigmoid,Adagrad,42.6,0.9614
+1,sigmoid,Adadelta,60.6,0.9637800000000001
+1,sigmoid,Adam,31.8,0.9644599999999999
+2,relu,Momentum,26.8,0.9398199999999999
+2,relu,Nesterov,33.8,0.9551400000000001
+2,relu,Adagrad,23.2,0.9539799999999999
+2,relu,Adadelta,24.6,0.96334
+2,relu,Adam,29.6,0.96098
