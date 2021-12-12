@@ -1,13 +1,12 @@
+import pickle
+
 from keras.datasets.mnist import load_data
 from keras.losses import SparseCategoricalCrossentropy
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, BatchNormalization
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 
 
-def main():
-    (x_train, y_train), (x_test, y_test) = load_data()
-
-    print("==== W pełni połączone warstwy ====")
+def test_simple(x_train, y_train, x_test, y_test):
     simple_model = Sequential([
         Flatten(input_shape=(28, 28)),
         Dense(64, activation='relu'),
@@ -17,9 +16,10 @@ def main():
 
     simple_model.compile(optimizer='adam', loss=SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
     simple_model.fit(x_train, y_train, epochs=20)
-    simple_model.evaluate(x_test, y_test)
+    return simple_model.history, simple_model.evaluate(x_test, y_test)
 
-    print("==== Warstwy konwolucyjne ====")
+
+def test_convolution(x_train, y_train, x_test, y_test):
     conv_model = Sequential([
         Conv2D(32, (2, 2), activation='relu', input_shape=(28, 28, 1)),
         Conv2D(64, (2, 2), activation='relu'),
@@ -28,9 +28,10 @@ def main():
     ])
     conv_model.compile(optimizer='adam', loss=SparseCategoricalCrossentropy(), metrics=['accuracy'])
     conv_model.fit(x_train, y_train, epochs=20)
-    conv_model.evaluate(x_test, y_test)
+    return conv_model.history, conv_model.evaluate(x_test, y_test)
 
-    print("==== Warstwy konwolucyjne + MaxPooling ====")
+
+def test_pooling(x_train, y_train, x_test, y_test):
     conv_model = Sequential([
         Conv2D(32, (2, 2), activation='relu', input_shape=(28, 28, 1)),
         MaxPooling2D(),
@@ -41,8 +42,27 @@ def main():
     ])
     conv_model.compile(optimizer='adam', loss=SparseCategoricalCrossentropy(), metrics=['accuracy'])
     conv_model.fit(x_train, y_train, epochs=20)
-    conv_model.evaluate(x_test, y_test)
+    return conv_model.history, conv_model.evaluate(x_test, y_test)
 
 
 if __name__ == '__main__':
-    main()
+    train, test = load_data()
+
+    results_simple = []
+    for _ in range(10):
+        history, accuracy = test_simple(*train, *test)
+        results_simple.append((history.history, accuracy))
+    pickle.dump(results_simple, open('results_simple.pkl', 'wb'))
+
+    results_conv = []
+    for _ in range(10):
+        history, accuracy = test_convolution(*train, *test)
+        results_conv.append((history.history, accuracy))
+    pickle.dump(results_conv, open('results_conv.pkl', 'wb'))
+
+    results_pool = []
+    for _ in range(10):
+        history, accuracy = test_pooling(*train, *test)
+        results_pool.append((history.history, accuracy))
+    pickle.dump(results_pool, open('results_pool.pkl', 'wb'))
+

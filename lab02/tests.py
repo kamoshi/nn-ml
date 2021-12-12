@@ -118,8 +118,8 @@ test_cases = [test_00, test_01, test_02]
 
 
 def main():
-    x_train, y_train = load_mnist('data/mnist', kind='train')
-    x_test, y_test = load_mnist('data/mnist', kind='t10k')
+    x_train, y_train = load_mnist('../data/mnist', kind='train')
+    x_test, y_test = load_mnist('../data/mnist', kind='t10k')
     y_train = np.array(list(map(to_binary_output, y_train)))
     y_test = np.array(list(map(to_binary_output, y_test)))
 
@@ -176,7 +176,7 @@ def main():
                 print("Avg epochs", avg_epochs, "Avg accuracy", avg_accuracy)
 
                 # append result to file
-                with open("lab02/results.csv", "a") as f:
+                with open("results.csv", "a") as f:
                     f.write(f"{i},{activation},{optimizer.__name__},{avg_epochs},{avg_accuracy}\n")
 
 
